@@ -20,6 +20,7 @@ import (
 
 	"github.com/infrastructure-io/topohub/pkg/bindingip"
 	"github.com/infrastructure-io/topohub/pkg/config"
+	"github.com/infrastructure-io/topohub/pkg/debug"
 	"github.com/infrastructure-io/topohub/pkg/hostendpoint"
 	"github.com/infrastructure-io/topohub/pkg/hostoperation"
 	"github.com/infrastructure-io/topohub/pkg/hoststatus"
@@ -53,6 +54,11 @@ func main() {
 	probePort := flag.String("health-probe-port", "8081", "The address the probe endpoint binds to.")
 	webhookPort := flag.String("webhook-port", "8082", "The address the probe endpoint binds to.")
 	metricsPort := flag.String("metrics-port", "8083", "The address the metric endpoint binds to.")
+	profilingPort := flag.String("profiling-port", "", "The address the profiling endpoint binds to.")
+	pyroscopeAddress := flag.String("pyroscope-address", "", "The address the pyroscope endpoint binds to.")
+	pyroscopeHostname := flag.String("pyroscope-hostName", "", "The hostname the pyroscope tag.")
+	gopsAddress := flag.String("gops-address", "", "The address the gops endpoint binds to.")
+
 	flag.Parse()
 
 	// Initialize logger
@@ -63,6 +69,15 @@ func main() {
 	ctrl.SetLogger(zap.New())
 
 	log.Logger.Info("Starting TopoHub")
+
+	// start pprof server
+	debug.ListenAndServe(*profilingPort)
+
+	// start pyroscope server
+	debug.RunPyroscope(*pyroscopeAddress, *pyroscopeHostname)
+
+	// start gops server
+	debug.RunGops(*gopsAddress)
 
 	// Initialize Kubernetes clients
 	k8sClient, _, err := initClients()

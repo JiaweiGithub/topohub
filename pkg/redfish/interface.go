@@ -2,8 +2,9 @@ package redfish
 
 import (
 	"fmt"
-	"github.com/stmcginnis/gofish/redfish"
 	"reflect"
+
+	"github.com/stmcginnis/gofish/redfish"
 
 	hoststatusData "github.com/infrastructure-io/topohub/pkg/hoststatus/data"
 	"github.com/stmcginnis/gofish"
@@ -50,6 +51,7 @@ func NewClient(hostCon hoststatusData.HostConnectCon, log *zap.SugaredLogger) (R
 		}
 		log.Debugf("logout invalid cached redfish client for %s", hostCon.Info.IpAddr)
 		c.client.Logout()
+		c.client.HTTPClient.CloseIdleConnections()
 		delete(CacheClient, hostCon.Info.IpAddr)
 	}
 

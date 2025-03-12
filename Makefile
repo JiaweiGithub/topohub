@@ -28,6 +28,11 @@ tools-image: build-tools-image
 build-tools-image:
 	docker build -t $(TOOLS_IMAGE_REF) -f image/tools/Dockerfile image/tools
 
+.PHONY: local-pprof
+local-pprof:
+	go run cmd/topohub/main.go --profiling-port=8084
+
+
 # Helm chart
 #================== chart
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
