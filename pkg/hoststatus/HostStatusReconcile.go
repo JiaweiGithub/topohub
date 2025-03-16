@@ -5,13 +5,12 @@ package hoststatus
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	hoststatusdata "github.com/infrastructure-io/topohub/pkg/hoststatus/data"
 	topohubv1beta1 "github.com/infrastructure-io/topohub/pkg/k8s/apis/topohub.infrastructure.io/v1beta1"
 
-	//"github.com/infrastructure-io/topohub/pkg/lock"
+	"github.com/infrastructure-io/topohub/pkg/lock"
 	"github.com/infrastructure-io/topohub/pkg/redfish"
 
 	gofishredfish "github.com/stmcginnis/gofish/redfish"
@@ -22,10 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
-
-// the lock-holding timeout is long because it needs to send http request to redfish for each host
-// so it uses sync.Mutex instead of lock.Mutex
-var hostStatusLock = &sync.Mutex{}
 
 // ------------------------------  update the spec.info of the hoststatus
 
@@ -89,10 +84,11 @@ func (c *hostStatusController) GenerateEvents(logEntrys []*gofishredfish.LogEntr
 
 // this is called by UpdateHostStatusAtInterval and UpdateHostStatusWrapper
 func (c *hostStatusController) UpdateHostStatusInfo(name string, d *hoststatusdata.HostConnectCon) (bool, error) {
-
-	// local lock for updateing each hostStatus
-	hostStatusLock.Lock()
-	defer hostStatusLock.Unlock()
+	// lock for updateing hostStatus instance
+	c.log.Debugf("lock for updateing hostStatus instance %s", name)
+	lock := lock.LockManagerInstance.GetLock(name)
+	lock.Lock()
+	defer lock.Unlock()
 
 	// 创建 redfish 客户端
 	var healthy bool
@@ -225,7 +221,7 @@ func (c *hostStatusController) UpdateHostStatusInfoWrapper(name string) error {
 	return nil
 }
 
-// ------------------------------  hoststatus spec.info 的	周期更新
+// ------------------------------ hoststatus spec.info 的 周期更新
 func (c *hostStatusController) UpdateHostStatusAtInterval() {
 	interval := time.Duration(c.config.RedfishHostStatusUpdateInterval) * time.Second
 	ticker := time.NewTicker(interval)
@@ -238,10 +234,19 @@ func (c *hostStatusController) UpdateHostStatusAtInterval() {
 			c.log.Info("Stopping UpdateHostStatusAtInterval")
 			return
 		case <-ticker.C:
-			c.log.Debugf("update all hostStatus at interval ")
+			c.log.Debugf("begin to update all hostStatus")
+			start := time.Now()
 			if err := c.UpdateHostStatusInfoWrapper(""); err != nil {
 				c.log.Errorf("Failed to update host status: %v", err)
 			}
+			c.log.Debugf("succeeded to update all hostStatus")
+			updateHostStatusCostTime := int(time.Since(start).Seconds())
+			c.log.Debugf("cost time %v to update all hostStatus", updateHostStatusCostTime)
+			// if updateHostStatusCostTime > int(interval.Seconds()) {
+			// 	// 如果执行时间比interval大  执行完sleep interval
+			// 	c.log.Infof("cost time %v is longer than interval %v, sleep %v seconds", updateHostStatusCostTime, int(interval.Seconds()), interval.Seconds())
+			// 	time.Sleep(interval)
+			// }
 		}
 	}
 }
