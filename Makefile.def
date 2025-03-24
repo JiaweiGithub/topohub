@@ -7,15 +7,18 @@ REGISTRY ?= ghcr.io/infrastructure-io
 TOOLS_IMAGE_NAME = tools
 TOPOHUB_IMAGE_NAME = topohub
 
-# Image tags
-VERSION ?= $(shell git rev-parse --short HEAD)
-TOOLS_IMAGE_TAG ?= latest
+# Topohub image
+TOPOHUB_IMAGE_TAG ?= latest
+TOPOHUB_IMAGE_REGISTRY ?= ghcr.io
+TOPOHUB_IMAGE_REPOSITORY ?= infrastructure-io/topohub
 
 # Full image paths
 TOOLS_IMAGE = $(REGISTRY)/$(TOOLS_IMAGE_NAME)
 TOPOHUB_IMAGE = $(REGISTRY)/$(TOPOHUB_IMAGE_NAME)
 
 # Full image references with tags
+TOOLS_IMAGE_TAG ?= latest
+VERSION ?= $(shell git rev-parse --short HEAD)
 TOOLS_IMAGE_REF = $(TOOLS_IMAGE):$(TOOLS_IMAGE_TAG)
 TOPOHUB_IMAGE_REF = $(TOPOHUB_IMAGE):$(VERSION)
 
@@ -48,3 +51,5 @@ GIT_COMMIT_VERSION = $(shell git show -s --format='format:%H')
 GIT_COMMIT_TIME = $(shell git show -s --format='format:%aI')
 
 DOCKER_BUILD_FLAGS := --build-arg GIT_COMMIT_VERSION=$(GIT_COMMIT_VERSION) --build-arg GIT_COMMIT_TIME=$(GIT_COMMIT_TIME) --build-arg PROJECT_VERSION=$(PROJECT_VERSION)
+
+KIND_NODE_VERSION := v1.27.2
