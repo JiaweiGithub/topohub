@@ -9,8 +9,9 @@ CURRENT_FILENAME=$( basename $0 )
 CURRENT_DIR_PATH=$(cd $(dirname $0); pwd)
 PROJECT_ROOT_PATH=$(cd ${CURRENT_DIR_PATH}/../..; pwd)
 
-IMAGE_NAME=${IMAGE_NAME:-"ghcr.io/infrastructure-io/topohub-tools:latest"}
-IMAGE_VERSION=${IMAGE_VERSION:-"latest"}
+TOPOHUB_IMAGE_TAG=${TOPOHUB_IMAGE_TAG:-"latest"}
+TOPOHUB_IMAGE_REGISTRY=${TOPOHUB_IMAGE_REGISTRY:-"ghcr.io"}
+TOPOHUB_IMAGE_REPOSITORY=${TOPOHUB_IMAGE_REPOSITORY:-"infrastructure-io/topohub"}
 CLUSTER_NAME=${CLUSTER_NAME:-"topohub"}
 
 #====================================
@@ -27,7 +28,9 @@ cat <<EOF >/tmp/topo.yaml
 replicaCount: 1
 logLevel: "debug"
 image:
-  tag: "${IMAGE_VERSION}"
+  tag: "${TOPOHUB_IMAGE_TAG}"
+  registry: "${TOPOHUB_IMAGE_REGISTRY}"
+  repository: "${TOPOHUB_IMAGE_REPOSITORY}"
 
 defaultConfig:
   redfish:
