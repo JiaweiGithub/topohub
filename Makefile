@@ -28,6 +28,18 @@ tools-image: build-tools-image
 build-tools-image:
 	docker build -t $(TOOLS_IMAGE_REF) -f image/tools/Dockerfile image/tools
 
+.PHONY: install_proscope
+install_proscope:
+	if [ -n "$(E2E_PYROSCOPE_VM_PORT)" ] ; then \
+  		echo "install proscope on vm $(E2E_VM_HOST)  " ; \
+  		( cd vagrant ; ./ssh "$(E2E_VM_HOST)" "sudo docker stop $(PYROSCOPE_CONTAINER_NAME) &>/dev/null || true" ) ; \
+  		( cd vagrant ; ./ssh "$(E2E_VM_HOST)" "sudo docker rm $(PYROSCOPE_CONTAINER_NAME) &>/dev/null || true" ) ; \
+  		( cd vagrant ; ./ssh "$(E2E_VM_HOST)" "sudo docker run -d --name $(PYROSCOPE_CONTAINER_NAME) -p $(E2E_PYROSCOPE_VM_PORT):4040 $(PYROSCOPE_IMAGE_NAME) server" ) ; \
+		echo "finish setuping pyroscope " ; \
+		HOST_IP=$$( ip r get 8.8.8.8 | grep -oE "src [\.0-9]+" | grep -oE "[\.0-9]+" ) ; \
+		echo "visit pyroscope: http://$${HOST_IP}:$(E2E_PYROSCOPE_HOST_PORT)" ; \
+      fi
+
 # Helm chart
 #================== chart
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
